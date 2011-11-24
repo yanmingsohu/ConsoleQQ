@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project Miniqq">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="mqq.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="Mainc"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="json-taglib-0.4.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="acm.jar"/>
+        </jar>
+        
+        <copy tofile="\\Server\荆彦铭\javas.j04" overwrite="true">
+			<fileset file="mqq.jar"/>
+		</copy>
+    </target>
+    
+</project>
