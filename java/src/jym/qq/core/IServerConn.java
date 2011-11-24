@@ -7,7 +7,7 @@ import java.util.Map;
 import jym.qq.core.MiniQQClient.METHOD;
 
 
-public interface IServer {
+public interface IServerConn {
 
 	/** 必须使用该方法取得用户,不要直接访问firends */
 	User getFriend(long qq$uid);
@@ -37,5 +37,5 @@ public interface IServer {
 	
 	/** 返回登录信息,用于拼装URL */
 	ILoginModel getLoginModel();
-	
+
 }

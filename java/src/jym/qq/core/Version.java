@@ -3,9 +3,9 @@
 package jym.qq.core;
 
 
-public class Message {
+public class Version {
 	
-	public static final String Version = "v0.04";
+	public static final String Version = "v0.05";
 	
 	
 	public static void welcome(StringBuilder o) {

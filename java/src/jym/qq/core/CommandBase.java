@@ -149,7 +149,7 @@ public abstract class CommandBase implements ICommand {
 	 */
 	protected void login(long id, String pw) {
 		logout();
-		IServer serv = new MiniQQClient(id, pw, core);
+		IServerConn serv = new MiniQQClient(id, pw, core, core.mgspkg);
 		core.setServer(serv);
 		makequick();
 	}
@@ -158,12 +158,16 @@ public abstract class CommandBase implements ICommand {
 	 * 登出系统
 	 */
 	protected void logout() {
-		IServer s = core.getServer();
+		IServerConn s = core.getServer();
 		if (s!=null) s.stop();
 	}
 	
 	protected IConsole getConsole() {
 		return core.console;
+	}
+	
+	protected IPrinter getPrinter() {
+		return core;
 	}
 	
 	/**
@@ -173,7 +177,7 @@ public abstract class CommandBase implements ICommand {
 		return this.getClass().getSimpleName().toLowerCase();
 	}
 	
-	public static void pl(Object o) {
-		System.out.println(o);
+	public void pl(Object o) {
+		core.println(o);
 	}
 }

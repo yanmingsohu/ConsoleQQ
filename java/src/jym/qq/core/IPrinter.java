@@ -4,6 +4,10 @@ package jym.qq.core;
 
 
 public interface IPrinter {
+	
 	/** 输出o,并打印换行 */
 	void println(Object o);
+	
+	/** 设置输出是否带时间 */
+	void setDispTime(boolean b);
 }

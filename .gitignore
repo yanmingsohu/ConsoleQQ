@@ -15,6 +15,7 @@ register.ini
 work
 classes
 java/frienddata.js
+_*.java
 
 
 

@@ -3,7 +3,8 @@
 package jym.qq.core;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -12,31 +13,37 @@ import jym.qq.cmd.ICommand;
 import jym.qq.console.DosConsole;
 import jym.qq.console.IConsole;
 import jym.qq.console.WinConsole;
+import jym.qq.message.MessagePackage;
 
 
 public class Core implements IPrinter {
 
+	private SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
+	
 	protected final Map<String, ICommand> cmds;
 	protected final Map<Long, User> quick_id;
 	
 	protected final IConsole console;
-	private IServer server = null;
+	protected final MessagePackage mgspkg;
+	private IServerConn serverConn = null;
 	private User target = null;
-	private boolean waitInput = false;
 	private ReentrantLock printLock;
+	
+	private boolean waitInput = false;
+	private boolean logtime = true;
 	
 	
 	public Core() {
 		printLock = new ReentrantLock();
 		console = createConsole();
+		mgspkg = ListenerFactory.create(new MessagePrinter());
 
 		StringBuilder out = new StringBuilder();
-		Message.welcome(out);
+		Version.welcome(out);
 		println(out);
 
 		quick_id = new LinkedHashMap<Long, User>();
-		cmds = new HashMap<String, ICommand>();
-		CommandList.createCommands(this, cmds);
+		cmds = CommandFactory.create(this);
 		loop();
 	}
 	
@@ -87,11 +94,15 @@ public class Core implements IPrinter {
 	}
 	
 	protected boolean isrun() {
-		return server!=null && server.running();
+		return serverConn!=null && serverConn.running();
 	}
 	
 	private String getCursor() {
 		return (target==null) ? "->" : ("[" + target.getNick() + "]->");
+	}
+	
+	public void setDispTime(boolean b) {
+		logtime = b;
 	}
 	
 	public void println(Object o) {
@@ -99,26 +110,48 @@ public class Core implements IPrinter {
 		if (waitInput) {
 			System.out.println();
 		}
+		
 		System.out.println(o);
+		
 		if (waitInput) {
 			System.out.print(getCursor());
 		}
 		printLock.unlock();
 	}
 
-	protected IServer getServer() {
-		return server;
+	protected IServerConn getServer() {
+		return serverConn;
 	}
 
 	protected User getTarget() {
 		return target;
 	}
 
-	protected void setServer(IServer server) {
-		this.server = server;
+	protected void setServer(IServerConn serverConn) {
+		if (serverConn!=null) {
+			this.serverConn = serverConn;
+		}
 	}
 
 	protected void setTarget(User target) {
 		this.target = target;
+	}
+	
+	private class MessagePrinter implements IPrinter {
+		
+		@Override
+		public void println(Object o) {
+			if (logtime) {
+				Core.this.println(sdf.format(new Date()) + " " + o);
+			} else {
+				Core.this.println(o);
+			}
+		}
+
+		@Override
+		public void setDispTime(boolean b) {
+			logtime = b;
+		}
+		
 	}
 }

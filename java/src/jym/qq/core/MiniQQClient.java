@@ -11,8 +11,6 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
@@ -24,6 +22,7 @@ import java.util.zip.GZIPInputStream;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+import jym.qq.message.MessagePackage;
 import atg.taglib.json.util.JSONArray;
 import atg.taglib.json.util.JSONObject;
 
@@ -36,9 +35,7 @@ import atg.taglib.json.util.JSONObject;
  * @editor CatfoOD E-mail:yanming-sohu@sohu.com [time 2011-11]
  * @version create Time：Dec 11, 2010 8:54:38 PM
  */
-public class MiniQQClient implements IServer {
-
-	private final SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
+public class MiniQQClient implements IServerConn {
 	
 	private final String HOST_D = "http://d.web2.qq.com";
 	private final String HOST_B = "http://web2-b.qq.com";
@@ -58,6 +55,7 @@ public class MiniQQClient implements IServer {
 	private String refer = HOST_D + "/proxy.html?v=20101025002";
 	private String cookie = "";
 
+	private MessagePackage message;
 	private PollMessageThread poll = new PollMessageThread();
 	private Map<Long, User> firends = new HashMap<Long, User>();
 	/** key is 'uin', value is 'qqid' */
@@ -67,10 +65,11 @@ public class MiniQQClient implements IServer {
 
 	
 	/** 不可复用 */
-	public MiniQQClient(long qq, String password, IPrinter p) {
+	public MiniQQClient(long qq, String password, IPrinter p, MessagePackage mp) {
 		this.prt = p;
 		this.qq_id = qq;
 		this.password = password;
+		message = mp;
 
 		try {
 			boolean login = login();
@@ -79,10 +78,10 @@ public class MiniQQClient implements IServer {
 				fetchAllFriends();
 				run = true;
 				poll.start();
-				log("now running.......");
+				print("now running.......");
 			}
 		} catch (Exception e) {
-			log("发生异常退出, 重新登录.");
+			print("发生异常退出, 重新登录.");
 			run = false;
 		}
 	}
@@ -150,10 +149,10 @@ public class MiniQQClient implements IServer {
 		p = Pattern.compile("登录成功！");
 		m = p.matcher(result);
 		if (m.find()) {
-			log("Welcome QQ : " + qq_id + " Login Success！");
+			print("Welcome QQ : " + qq_id + " Login Success！");
 		}
 		else {
-			log("login failure.");
+			print("login failure.");
 			return false;
 		}
 
@@ -167,7 +166,7 @@ public class MiniQQClient implements IServer {
 		m = p.matcher(cookie);
 		if (m.find()) {
 			this.skey = m.group(1);
-			log("skey: " + skey);
+			print("skey: " + skey);
 		}
 		// log("ptwebqq="+ptwebqq+",skey="+skey);
 
@@ -219,7 +218,7 @@ public class MiniQQClient implements IServer {
 			// log("AllFriends= "+result);
 			return result;
 		} catch (Exception e) {
-			log("fetchAllFriends failure.............\t" + e);
+			print("fetchAllFriends failure.............\t" + e);
 			return null;
 		}
 	}
@@ -252,7 +251,7 @@ public class MiniQQClient implements IServer {
 				}
 			}
 		} catch (Exception e) {
-			log("getFriendInfo failure:" + e);
+			print("getFriendInfo failure:" + e);
 		}
 	}
 	
@@ -341,7 +340,7 @@ public class MiniQQClient implements IServer {
 			return false;
 			
 		} catch (Exception e) {
-			log("send message to " + toQQ + " failure......\n" + e.getMessage());
+			print("send message to " + toQQ + " failure......\n" + e.getMessage());
 		}
 		return false;
 	}
@@ -455,99 +454,36 @@ public class MiniQQClient implements IServer {
 
 		public void run() {
 			String pollUrl = HOST_D + "/channel/poll?clientid=" + clientid + "&psessionid=" + psessionid;
+			
 			while (run) {
 				try {
 					String ret = sendHttpMessage(pollUrl, METHOD.GET, null);
+					
 					JSONObject retJ = new JSONObject(ret);
 					int retcode = retJ.getInt("retcode");
 				
 					if (retcode == 0) {
 						JSONArray result = retJ.getJSONArray("result");
 						String poll_type = result.getJSONObject(0).getString("poll_type");
-						JSONObject value = result.getJSONObject(0).getJSONObject("value");
 						
-						if ("message".equals(poll_type)) {// 好友消息
-							try {
-								receiveMsg(value);
-							} catch (Exception e) {
-							}
-						}
-						else if ("buddies_status_change".equals(poll_type)) {// 好友上下线
-							changeStatus(value);
-						}
-						else if ("group_message".equals(poll_type)) {// 群消息
-							log("接受到群消息,忽略...");
-						} 
-						else if ("system_message".equals(poll_type)) {
-							log("接受到系统消息,忽略...");
-						} 
-						else {
-							print(ret);
-						}
+						message.sendMessage(MiniQQClient.this, poll_type, retJ);
 					}
 					else if (retcode == 121) {
 						run = false;
-						log("QQ已经在别处登录！");
+						print("QQ已经在别处登录！");
 					}
 					else {
 						sleep(3000);
 					}
 				} catch (Exception e) {
-					log("Response PollMessage failure .");
+					print("Response PollMessage failure .");
 				}
 			}
 		}
-		
-		private void receiveMsg(JSONObject value) throws Exception {
-			String content = value.getJSONArray("content").getString(1);
-			long from_uin = value.getLong("from_uin");
-			long reply_ip = value.getLong("reply_ip");
-		
-			StringBuilder out = new StringBuilder("[ ");
-			User u = getFriend(from_uin);
-			if (null == u) {
-				out.append(from_uin);
-			} else {
-				out.append(u.getNick());
-			}
-			
-			out.append(" ]: ");
-			out.append(content);
-			out.append(" (");
-			numToIp(out, reply_ip);
-			out.append(")");
-			
-			log(out.toString());
-		}
-		
-		public void changeStatus(JSONObject value) throws Exception {
-			long from_uin = value.getLong("uin");
-			String status = value.getString("status");
-
-			User u = getFriend(from_uin);
-			if (u==null) {
-				log("用户：" + from_uin + "\t" + status);
-			} else {
-				log("用户：" + u.getNick() + "\t" + status);
-			}
-		}
-
-		public void numToIp(StringBuilder out, Long num) {
-			String ip = Long.toHexString(num);
-			out.append( Integer.parseInt(ip.substring(0, 2), 16) ).append('.');
-			out.append( Integer.parseInt(ip.substring(2, 4), 16) ).append('.');
-			out.append( Integer.parseInt(ip.substring(4, 6), 16) ).append('.');
-			out.append( Integer.parseInt(ip.substring(6)   , 16) );
-		}
-	}
-	
-	// 记录日志
-	private void log(String msg) {
-		print(msg);
 	}
 	
 	private void print(Object o) {
-		prt.println(sdf.format(new Date()) + " : " + o);
+		prt.println(o);
 	}
 
 	public ILoginModel getLoginModel() {
