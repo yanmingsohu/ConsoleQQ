@@ -70,7 +70,9 @@ public abstract class CommandBase implements ICommand {
 		
 		while (it.hasNext()) {
 			User u = it.next();
-			i++; q.put(i, u);
+			i++; 
+			q.put(i, u);
+			u.setQuick(i); 
 		}
 	}
 	

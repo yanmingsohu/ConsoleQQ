@@ -6,6 +6,7 @@ public class User {
 	private long qq;
 	private int face;
 	private long flag;
+	private long quick;
 	private String nick;
 	private String markname;
 
@@ -74,5 +75,13 @@ public class User {
 	
 	public void setMarkname(String markname) {
 		this.markname = markname;
+	}
+
+	public long getQuick() {
+		return quick;
+	}
+
+	public void setQuick(long quick) {
+		this.quick = quick;
 	}
 }

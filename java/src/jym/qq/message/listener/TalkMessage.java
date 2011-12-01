@@ -28,6 +28,7 @@ public class TalkMessage implements IMessageListener {
 			out.append(from_uin);
 		} else {
 			out.append(u.getNick());
+			out.append('(').append(u.getQuick()).append(')');
 		}
 		
 		out.append(" ]: ");

@@ -18,10 +18,6 @@
             <zipfileset excludes="META-INF/*.SF" src="json-taglib-0.4.1.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="acm.jar"/>
         </jar>
-        
-        <copy tofile="\\Server\荆彦铭\javas.j05" overwrite="true">
-			<fileset file="mqq.jar"/>
-		</copy>
     </target>
     
 </project>
