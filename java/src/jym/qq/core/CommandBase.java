@@ -33,6 +33,13 @@ public abstract class CommandBase implements ICommand {
 	}
 	
 	/**
+	 * 返回存储群组快捷码的map
+	 */
+	protected Map<Long, Group> getGrouper() {
+		return core.group_id;
+	}
+	
+	/**
 	 * 返回登录信息, 如果未登录抛出NULL异常
 	 */
 	protected ILoginModel getLoginModel() {
@@ -44,6 +51,13 @@ public abstract class CommandBase implements ICommand {
 	 */
 	protected Collection<User> getAllUsers() {
 		return core.getServer().allUsers().values();
+	}
+	
+	/**
+	 * 返回所有群组
+	 */
+	protected Collection<Group> getAllGroups() {
+		return core.getServer().allGroups().values();
 	}
 	
 	/**
@@ -77,6 +91,24 @@ public abstract class CommandBase implements ICommand {
 	}
 	
 	/**
+	 * 重新刷新快捷群组码表, 如果未登录抛出NULL异常
+	 */
+	protected void makeGroupquick() {
+		Map<Long, Group> g = core.group_id;
+		g.clear();
+		
+		Iterator<Group> it = getAllGroups().iterator();
+		long i=0;
+		
+		while (it.hasNext()) {
+			Group u = it.next();
+			i++; 
+			g.put(i, u);
+			u.setGuick(i); 
+		}
+	}
+	
+	/**
 	 * 从快捷码,qq码或者uin返回用户,如果未登录抛出NULL异常
 	 */
 	protected User getFriend(long id) {
@@ -86,6 +118,15 @@ public abstract class CommandBase implements ICommand {
 			u = core.getServer().getFriend(id);
 		}
 		return u;
+	}
+
+	protected Group getGroup(long code) {
+		Map<Long, Group> guick = core.group_id;
+		Group g = guick.get(code);
+		if (g==null) {
+			g = core.getServer().getGroup(code);
+		}
+		return g;
 	}
 	
 	/**
@@ -154,6 +195,8 @@ public abstract class CommandBase implements ICommand {
 		IServerConn serv = new MiniQQClient(id, pw, core, core.mgspkg);
 		core.setServer(serv);
 		makequick();
+		makeGroupquick();
+		
 	}
 	
 	/**

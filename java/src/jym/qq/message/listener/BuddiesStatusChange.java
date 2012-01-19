@@ -26,7 +26,7 @@ public class BuddiesStatusChange implements IMessageListener {
 		if (u==null) {
 			e.log("用户：" + from_uin + "\t" + status);
 		} else {
-			e.log("用户：" + u.getNick() + "\t" + status);
+			e.log("用户：" + u.getNick() + "(" + u.getQuick()+ ")"+"\t" + status);
 		}
 	}
 

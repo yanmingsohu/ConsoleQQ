@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jym.qq.cmd.Exit;
+import jym.qq.cmd.Groups;
 import jym.qq.cmd.Help;
 import jym.qq.cmd.ICommand;
 import jym.qq.cmd.Info;
@@ -28,6 +29,7 @@ public final class CommandFactory {
 		Send.class,
 		To.class,
 		Users.class,
+		Groups.class,
 		Logout.class,
 		State.class,
 		Time.class,

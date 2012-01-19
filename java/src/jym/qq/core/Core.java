@@ -22,7 +22,8 @@ public class Core implements IPrinter {
 	
 	protected final Map<String, ICommand> cmds;
 	protected final Map<Long, User> quick_id;
-	
+	/**新增群消息*/
+	protected final Map<Long,Group>  group_id;
 	protected final IConsole console;
 	protected final MessagePackage mgspkg;
 	private IServerConn serverConn = null;
@@ -43,6 +44,8 @@ public class Core implements IPrinter {
 		println(out);
 
 		quick_id = new LinkedHashMap<Long, User>();
+		group_id = new LinkedHashMap<Long, Group>();
+		
 		cmds = CommandFactory.create(this);
 		loop();
 	}
@@ -98,7 +101,7 @@ public class Core implements IPrinter {
 	}
 	
 	private String getCursor() {
-		return (target==null) ? "->" : ("[" + target.getNick() + "]->");
+		return (target==null) ? "->" : ("[" + target.getNick() + "("+ target.getQuick() + ")" + "]->");
 	}
 	
 	public void setDispTime(boolean b) {

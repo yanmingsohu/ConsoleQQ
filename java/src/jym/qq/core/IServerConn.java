@@ -11,8 +11,14 @@ public interface IServerConn {
 
 	/** 必须使用该方法取得用户,不要直接访问firends */
 	User getFriend(long qq$uid);
-
+	
+	Group getGroup(long code);
+	/**查询群消息来源信息*/
+	Group getGroup(long code, long senduin);
+	
 	Map<Long, User> allUsers();
+	
+	Map<Long, Group> allGroups();
 
 	/** 已经连接到服务器返回true */
 	boolean running();
@@ -26,6 +32,9 @@ public interface IServerConn {
 	/** 输入uin 返回qq */
 	long getQQWithUin(long uid);
 
+	/** 取群组, 会清除之前的信息 */
+	void fetchAllGroups();
+	
 	/** 在线用户 */
 	void fetchAllOnlineFriends();
 
@@ -37,5 +46,7 @@ public interface IServerConn {
 	
 	/** 返回登录信息,用于拼装URL */
 	ILoginModel getLoginModel();
+
+
 
 }

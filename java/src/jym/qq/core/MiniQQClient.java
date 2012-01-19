@@ -57,10 +57,10 @@ public class MiniQQClient implements IServerConn {
 
 	private MessagePackage message;
 	private PollMessageThread poll = new PollMessageThread();
-	private Map<Long, User> firends = new HashMap<Long, User>();
+	private Map<Long, User>  firends = new HashMap<Long, User>();
+	private Map<Long, Group> groups = new HashMap<Long, Group>();
 	/** key is 'uin', value is 'qqid' */
 	private Map<Long, Long> uincatch = new HashMap<Long, Long>();
-
 	public enum METHOD { GET, POST }
 
 	
@@ -76,6 +76,7 @@ public class MiniQQClient implements IServerConn {
 			if (login) {
 				// fetchAllOnlineFriends();
 				fetchAllFriends();
+				fetchAllGroups();
 				run = true;
 				poll.start();
 				print("now running.......");
@@ -100,6 +101,19 @@ public class MiniQQClient implements IServerConn {
 	
 	public Map<Long, User> allUsers() {
 		return firends;
+	}
+	
+	
+	@Override
+	public Group getGroup(long code,long senduin) {
+		
+		Group g = getGGWithUin(code,senduin);
+		return g;
+	}
+
+	@Override
+	public Map<Long, Group> allGroups() {
+		return groups;
 	}
 	
 	public boolean running() {
@@ -140,7 +154,7 @@ public class MiniQQClient implements IServerConn {
 
 		// login 2
 		String loginUrl = "http://ptlogin2.qq.com/login?u=" + qq_id + "&" + "p=" + encodePass(this.password, check)
-				+ "&verifycode=" + check + "&remember_uin=1&aid=1003903"
+				+ "&verifycode=" + check + "&webqq_type=40&"+"&remember_uin=1&aid=1003903"
 				+ "&u1=http%3A%2F%2Fweb2.qq.com%2Floginproxy.html%3Fstrong%3Dtrue"
 				+ "&h=1&ptredirect=0&ptlang=2052&from_ui=1&pttype=1&dumy=&fp=loginerroralert";
 
@@ -223,6 +237,9 @@ public class MiniQQClient implements IServerConn {
 		}
 	}
 	
+	/** 
+	 * 取QQ好友
+	 */
 	@SuppressWarnings("unchecked")
 	private void getFriendInfo(String result) {
 		try {
@@ -255,6 +272,68 @@ public class MiniQQClient implements IServerConn {
 		}
 	}
 	
+	
+	/** 
+	 * 取QQ群, 会清除之前的信息
+	 */
+	
+	
+	@Override
+	public void fetchAllGroups() {
+		String getGroupsurl2 = HOST_S + "/api/get_group_name_list_mask2";
+		String resultJson = fetchAllGroups(getGroupsurl2);
+		getGroupInfo(resultJson);
+	}
+	
+	private String fetchAllGroups(String getGroupurl) {
+		// {"h":"hello","vfwebqq":"7fe84931db23dc5a0351d759905642bcf5d09632e001bbfc8822809067538431d4da9dd1e8e653a0"}
+		String content = "{\"h\":\"hello\",\"vfwebqq\":\"" + vfwebqq + "\"}";
+		try {
+			content = URLEncoder.encode(content, "UTF-8");
+			content = "r=" + content;
+			String result = sendHttpMessage(getGroupurl, METHOD.POST, content);
+			// log("AllFriends= "+result);
+			return result;
+		} catch (Exception e) {
+			print("fetchAllFriends failure.............\t" + e);
+			return null;
+		}
+	}
+	
+	/** 
+	 * 取QQ群
+	 */
+	@SuppressWarnings("unchecked")
+	private void getGroupInfo(String result) {
+		try {
+			JSONObject retJson = new JSONObject(result);
+			if (retJson.getInt("retcode") == 0) {
+				JSONObject jresult = retJson.getJSONObject("result");
+				JSONArray infos = jresult.getJSONArray("gnamelist");
+				
+				Map<Long, String> markns = new HashMap<Long, String>();
+				for (ListIterator<JSONObject> it = infos.listIterator(); it.hasNext();) {
+					JSONObject obj = it.next();
+					markns.put(obj.getLong("gid"), obj.getString("name"));
+				}
+				
+				groups.clear();
+				for (ListIterator<JSONObject> it = infos.listIterator(); it.hasNext();) {
+					JSONObject obj = it.next();
+					Group group = new Group(obj.getLong("flag"), 
+										obj.getString("name"), 
+										obj.getLong("gid"), 
+										obj.getLong("code"));
+					groups.put(group.getGid(), group);
+				}
+			}
+		} catch (Exception e) {
+			print("getFriendInfo failure:" + e);
+		}
+	}
+	
+	
+	
 	/** 输入uin 返回qq */
 	public long getQQWithUin(long uid) {
 		Long qq = uincatch.get(uid);
@@ -277,6 +356,47 @@ public class MiniQQClient implements IServerConn {
 		}
 		return -1;
 	}
+	
+	
+	/** 输入gid 返回gg  
+	 * @param senduin */
+	public Group getGGWithUin(long gcode, long senduin) {
+		Group g = new Group();
+		try {
+			/* type==【好友-1，群-4】 */
+			//http://s.web2.qq.com/api/get_group_info_ext2?gcode=2870913606&vfwebqq=026582eb1c7ac6fa4aa71daadb87a62c0d0bef367506e7bc75aed9debfdb481664370cc14777e6de&t=1326779989664
+			String url = HOST_S + "/api/get_group_info_ext2?gcode=" + gcode +
+					"&verifysession=&type=&code=&vfwebqq=" + vfwebqq + "&t=";
+			String ret = sendHttpMessage(url, METHOD.GET, null);
+			
+			JSONObject retJ = new JSONObject(ret);
+			Map<Long,String> nameMap = new HashMap<Long,String>();
+			Map<Long,String> userMap = new HashMap<Long,String>();
+			
+			JSONObject jresult = retJ.getJSONObject("result");
+			//获取所有群成员
+			JSONArray minfo = jresult.getJSONArray("minfo");
+		
+			for(int i=0;i<minfo.size();i++){
+				long userqq = minfo.getJSONObject(i).getLong("uin");
+				String username = minfo.getJSONObject(i).getString("nick");
+				userMap.put(userqq, username);
+			}
+			
+			//获取群名字以及code
+			JSONObject ginfo = jresult.getJSONObject("ginfo");
+			nameMap.put(ginfo.getLong("code"), ginfo.getString("name"));
+			
+			g.setGroup_name(nameMap);
+			g.setSend_username(userMap);
+			
+		} catch(Exception e) {
+			print("get uin fail.");
+			//e.printStackTrace();
+		}
+		return g;
+	}
+
 
 	// 在线用户
 	public void fetchAllOnlineFriends() {
@@ -497,4 +617,12 @@ public class MiniQQClient implements IServerConn {
 			public long   t()			{ return System.currentTimeMillis(); }
 		};
 	}
+
+	@Override
+	public Group getGroup(long code) {
+		// 此处无用
+		return null;
+	}
+
+
 }

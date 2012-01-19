@@ -2,6 +2,8 @@
 
 package jym.qq.message;
 
+
+import jym.qq.core.Group;
 import jym.qq.core.IPrinter;
 import jym.qq.core.IServerConn;
 import jym.qq.core.User;
@@ -48,5 +50,9 @@ public class MsgEvent {
 	
 	public User getFriend(long id) {
 		return server.getFriend(id);
+	}
+	
+	public Group getGroup(long code,long senduin) {
+		return server.getGroup(code,senduin);
 	}
 }
