@@ -288,7 +288,7 @@ public class MiniQQClient implements IServerConn {
 
 	public boolean sendMsg(long toQQ, String message) {
 		try {
-			print("sending message...");
+			//print("sending message to " + toQQ);
 			JSONObject json = new JSONObject();
 			json.put("to", toQQ);// 要发送的人
 			json.put("face", 330);
@@ -331,7 +331,7 @@ public class MiniQQClient implements IServerConn {
 			if (null != res) {
 				JSONObject rh = new JSONObject(res);
 				if ("ok".equals(rh.getString("result"))) {
-					print("send ok.");
+					//print("send ok.");
 					return true;
 				}
 			}

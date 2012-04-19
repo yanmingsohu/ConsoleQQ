@@ -12,10 +12,12 @@ import jym.qq.cmd.Info;
 import jym.qq.cmd.Login;
 import jym.qq.cmd.Logout;
 import jym.qq.cmd.Send;
+import jym.qq.cmd.SendAll;
 import jym.qq.cmd.State;
 import jym.qq.cmd.Time;
 import jym.qq.cmd.To;
 import jym.qq.cmd.Users;
+import jym.qq.cmd._Test;
 
 
 public final class CommandFactory {
@@ -31,6 +33,8 @@ public final class CommandFactory {
 		Logout.class,
 		State.class,
 		Time.class,
+		SendAll.class,
+		_Test.class
 	};
 
 	
